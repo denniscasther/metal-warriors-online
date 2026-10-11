@@ -1,0 +1,15 @@
+import {cp,mkdir,readFile,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+const root=path.resolve(import.meta.dirname,'..'),dist=path.join(root,'dist');
+await mkdir(dist,{recursive:true});
+await cp(path.join(root,'public'),dist,{recursive:true});
+await cp(path.join(root,'vendor/emulatorjs/data'),path.join(dist,'emulator'),{recursive:true});
+await cp(path.join(root,'vendor/emulatorjs/LICENSE'),path.join(dist,'EMULATORJS-LICENSE'));
+await mkdir(path.join(dist,'socket.io'),{recursive:true});
+await cp(path.join(root,'node_modules/socket.io/client-dist/socket.io.js'),path.join(dist,'socket.io/socket.io.js'));
+const backend=process.env.BACKEND_URL||'';
+if(backend&&new URL(backend).protocol!=='https:')throw Error('El servidor público debe usar HTTPS');
+await writeFile(path.join(dist,'runtime-config.js'),`window.MW_BACKEND_URL=${JSON.stringify(backend)};\nwindow.MW_STATIC_HOST=true;\n`);
+await writeFile(path.join(dist,'.nojekyll'),'');
+await writeFile(path.join(dist,'THIRD-PARTY.txt'),'EmulatorJS f4f0f1c7c4e24440820767203adf04cfe39aed0c\nSource: https://github.com/EmulatorJS/EmulatorJS/tree/f4f0f1c7c4e24440820767203adf04cfe39aed0c\nGPL-3.0 license: EMULATORJS-LICENSE\nUnmodified source modules are provided under emulator/src.\nSNES core source: https://github.com/EmulatorJS/EmulatorJS/tree/f4f0f1c7c4e24440820767203adf04cfe39aed0c/data/cores\n');
+console.log('GitHub Pages preparado sin ROMs. Backend:',backend||'Sin configurar; práctica local disponible');

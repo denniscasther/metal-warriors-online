@@ -1,0 +1,11 @@
+node_modules/
+vendor/
+private/
+artifacts/
+*.log
+.env
+dist/
+*.smc
+*.sfc
+*.rar
+*.zip
