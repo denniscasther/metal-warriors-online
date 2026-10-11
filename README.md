@@ -1,5 +1,9 @@
 # Metal Warriors Arena
 
+## Descarga pública
+
+Por petición del usuario y tras su confirmación de autorización para distribuir el archivo, el portal ofrece `public/downloads/metal-warriors-es.smc` (2 MiB, traducción parcial al español). Esta confirmación no es una verificación independiente de los derechos. El archivo se publica en GitHub y GitHub Pages; no se expone la carpeta `private/`. `tests/download.test.mjs` verifica su SHA-256 frente a la versión aceptada por las salas. Las referencias históricas a publicación «sin ROMs» corresponden a la versión anterior a esta descarga.
+
 ## GitHub y publicación
 
 ### Servidor gratuito en Render (activo)
@@ -22,7 +26,7 @@ Repositorio: https://github.com/denniscasther/metal-warriors-online
 
 Diseño con ilustración vectorial original, jerarquía visual de piloto/ROM/combate, tarjetas de sala y estados de conexión explícitos. La ROM permanece en el navegador. Los efectos respetan `prefers-reduced-motion`; se mantiene acceso por teclado y la distribución se adapta al ancho de pantalla. `tests/ui-state.test.mjs` cubre requisitos y mensajes; `tests/ui-contract.test.mjs` verifica que el rediseño preserve los elementos utilizados por el juego. La revisión visual en navegador de esta renovación queda pendiente por falta de navegador conectado en la sesión.
 
-GitHub Actions prepara el emulador fijado a su revisión, verifica las huellas del núcleo SNES y publica únicamente `dist/` en Pages al hacer push a `main`. No se publican ROMs, archivos privados ni registros. La variable de repositorio `BACKEND_URL` señala el servicio Node/Socket.IO de salas. Cuando cambie esa dirección, actualizar la variable y volver a ejecutar el workflow.
+GitHub Actions prepara el emulador fijado a su revisión, verifica las huellas del núcleo SNES y publica únicamente `dist/` en Pages al hacer push a `main`. Incluye la descarga española expresamente solicitada; no publica la carpeta privada ni registros. La variable de repositorio `BACKEND_URL` señala el servicio Node/Socket.IO de salas. Cuando cambie esa dirección, actualizar la variable y volver a ejecutar el workflow.
 
 La web y la práctica individual funcionan sin el servidor de salas, siempre que el navegador pueda descargar los recursos y el usuario seleccione su ROM. Si el servidor no está disponible, la interfaz lo informa y desactiva crear/buscar salas. El multijugador aún depende del servidor externo: publicar en GitHub no convierte el túnel temporal en un alojamiento permanente.
 

@@ -12,4 +12,4 @@ if(backend&&new URL(backend).protocol!=='https:')throw Error('El servidor públi
 await writeFile(path.join(dist,'runtime-config.js'),`window.MW_BACKEND_URL=${JSON.stringify(backend)};\nwindow.MW_STATIC_HOST=true;\n`);
 await writeFile(path.join(dist,'.nojekyll'),'');
 await writeFile(path.join(dist,'THIRD-PARTY.txt'),'EmulatorJS f4f0f1c7c4e24440820767203adf04cfe39aed0c\nSource: https://github.com/EmulatorJS/EmulatorJS/tree/f4f0f1c7c4e24440820767203adf04cfe39aed0c\nGPL-3.0 license: EMULATORJS-LICENSE\nUnmodified source modules are provided under emulator/src.\nSNES core source: https://github.com/EmulatorJS/EmulatorJS/tree/f4f0f1c7c4e24440820767203adf04cfe39aed0c/data/cores\n');
-console.log('GitHub Pages preparado sin ROMs. Backend:',backend||'Sin configurar; práctica local disponible');
+console.log('GitHub Pages preparado con la descarga pública configurada. Backend:',backend||'Sin configurar; práctica local disponible');

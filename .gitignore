@@ -9,3 +9,4 @@ dist/
 *.sfc
 *.rar
 *.zip
+!public/downloads/metal-warriors-es.smc
