@@ -1,8 +1,9 @@
+import {loadBackendConfig} from './backend-config.js';
 const $=id=>document.getElementById(id),baseIO=window.io;
 const backend=(window.MW_BACKEND_URL||location.origin).replace(/\/$/,'');
 const assetBase=new URL('./',location.href).href;
 const offlineConfig={offline:true,localRom:false,iceServers:[],roms:{'7179556197d57fce35968f1fc1f303c825ec0a376bfda6ad3e8d8c36207ea2f3':{label:'Español',gameId:210201},'0d7f875877fe856066cfb39b4ecdbbe7d48393a75770720876c94419f809bb1c':{label:'USA · Inglés',gameId:210202}}};
-const config=await fetch(backend+'/api/config',{signal:AbortSignal.timeout(8000)}).then(r=>{if(!r.ok)throw Error('Servidor no disponible');return r.json();}).catch(()=>offlineConfig);
+const config=await loadBackendConfig(backend,{attempts:new URL(backend).hostname.endsWith('.onrender.com')?12:1,onWaiting:()=>{$('connection').textContent='Despertando servidor · puede tardar hasta 2 minutos';$('rooms').textContent='El alojamiento gratuito está iniciando. Espera un momento para entrar al hangar.';}}).catch(()=>offlineConfig);
 if(config.offline||window.MW_STATIC_HOST||config.publicUrl)document.querySelector('.notice').replaceChildren(document.createTextNode(config.offline?'PRÁCTICA DISPONIBLE ':'BETA EN PRUEBAS '),Object.assign(document.createElement('span'),{textContent:config.offline?'El servidor de salas está apagado. Puedes cargar tu ROM y practicar.':window.MW_STATIC_HOST?'Web alojada en GitHub. Las salas usan un servidor externo de prueba.':'Invitaciones por enlace temporal. El anfitrión debe mantener abierta la partida.'}));
 let session=null,lobby=null,rom=null,hash=null,emuReady=false,loading=null,pending=null,activeRoom=null,lastState={rooms:[],players:[]},busy=false;
 let messageTimer;

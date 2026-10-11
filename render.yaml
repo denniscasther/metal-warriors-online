@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: metal-warriors-salas
+    runtime: node
+    plan: free
+    region: virginia
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: BACKEND_ONLY
+        value: "true"
+      - key: PUBLIC_URL
+        value: https://denniscasther.github.io/metal-warriors-online/

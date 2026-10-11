@@ -2,6 +2,16 @@
 
 ## GitHub y publicación
 
+### Servidor gratuito en Render (preparado; pendiente de activar)
+
+[Crear el servidor gratuito en Render](https://render.com/deploy?repo=https://github.com/denniscasther/metal-warriors-online)
+
+El archivo `render.yaml` define únicamente un servicio Node con `plan: free`, sin base de datos, discos ni complementos de pago. Iniciar sesión en Render, revisar que el plan sea **Free** y crear el servicio. Si solicita contratar un plan de pago, no continuar. El servidor escucha en `0.0.0.0` y el puerto asignado por Render; `/api/health` es su comprobación de salud. La raíz redirige al juego en GitHub Pages. No necesita emulador ni ROM en Render.
+
+Cuando Render muestre el despliegue **Live**, copiar la URL HTTPS real y comprobar `/api/health`. Después establecer esa URL en la variable `BACKEND_URL` del repositorio GitHub y ejecutar el workflow de Pages. No sustituir el backend temporal hasta verificar el nuevo servicio. El botón de despliegue no activa actualizaciones automáticas; tras cambios futuros del servidor, desplegar manualmente en Render.
+
+La página reintenta al iniciar durante aproximadamente dos minutos si el backend es `*.onrender.com`, para soportar el despertar del plan gratuito. Si falla, permite práctica individual; recargar para volver a intentar las salas. No realiza sondeos en segundo plano para evitar la suspensión. Las salas se pierden al reiniciar el servidor. El plan gratuito tiene cuotas y no garantiza disponibilidad continua. TURN sigue sin estar configurado: ciertas redes pueden impedir la conexión directa entre jugadores.
+
 Web: https://denniscasther.github.io/metal-warriors-online/
 
 Repositorio: https://github.com/denniscasther/metal-warriors-online

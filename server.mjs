@@ -11,7 +11,7 @@ export const ROMS={
 };
 const root=import.meta.dirname;
 const clean=(s,max=24)=>typeof s==='string'?s.trim().replace(/[\x00-\x1f]/g,'').slice(0,max):'';
-export function createApp({localRom=false,iceServers=[]}={}){
+export function createApp({localRom=false,iceServers=[],backendOnly=false}={}){
  const allowedOrigins=['https://denniscasther.github.io'];
  const app=express(),http=createServer(app),io=new Server(http,{maxHttpBufferSize:65536,cors:{origin:allowedOrigins,methods:['GET','POST']}});
  const sessions=new Map(),rooms=new Map();
@@ -86,13 +86,18 @@ export function createApp({localRom=false,iceServers=[]}={}){
   socket.on('disconnect',()=>{clearInterval(rateTimer);if(role==='lobby'&&s.emu)io.sockets.sockets.get(s.emu)?.disconnect(true);leave(socket);if(s[key]===socket.id)s[key]=null;s.seen=Date.now();broadcast();});
  });
  const cleanup=setInterval(()=>{for(const [t,s]of sessions)if(!s.lobby&&!s.emu&&Date.now()-s.seen>60000)sessions.delete(t);},30000);cleanup.unref();
- app.use('/emulator',express.static(path.join(root,'vendor/emulatorjs/data'),{dotfiles:'deny'}));
- app.use(express.static(path.join(root,'public'),{dotfiles:'deny'}));
+ if(backendOnly){
+  app.get('/',(req,res)=>res.redirect('https://denniscasther.github.io/metal-warriors-online/'));
+ }else{
+  app.use('/emulator',express.static(path.join(root,'vendor/emulatorjs/data'),{dotfiles:'deny'}));
+  app.use(express.static(path.join(root,'public'),{dotfiles:'deny'}));
+ }
  app.use((err,req,res,next)=>res.status(400).json({error:'Solicitud inválida'}));
  return {app,http,io,rooms,sessions,close:()=>new Promise(resolve=>{clearInterval(cleanup);io.close(()=>http.close(()=>resolve()));})};
 }
 if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url){
  const port=Number(process.env.PORT||4178),host=process.env.HOST||'127.0.0.1';
  const iceServers=process.env.ICE_SERVERS_JSON?JSON.parse(process.env.ICE_SERVERS_JSON):[{urls:'stun:stun.l.google.com:19302'}];
- const {http}=createApp({localRom:host==='127.0.0.1',iceServers});http.listen(port,host,()=>console.log(`Metal Warriors: http://${host}:${port}`));
+ const backendOnly=process.env.BACKEND_ONLY==='true';
+ const {http}=createApp({localRom:!backendOnly&&host==='127.0.0.1',iceServers,backendOnly});http.listen(port,host,()=>console.log(`Metal Warriors: http://${host}:${port}`));
 }
