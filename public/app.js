@@ -1,29 +1,35 @@
 import {loadBackendConfig} from './backend-config.js';
+import {lobbyHint,emptyRooms,roomAction} from './ui-state.js';
 const $=id=>document.getElementById(id),baseIO=window.io;
+function connection(label,state){$('connection').textContent=label;$('connection').dataset.state=state;}
 const backend=(window.MW_BACKEND_URL||location.origin).replace(/\/$/,'');
 const assetBase=new URL('./',location.href).href;
 const offlineConfig={offline:true,localRom:false,iceServers:[],roms:{'7179556197d57fce35968f1fc1f303c825ec0a376bfda6ad3e8d8c36207ea2f3':{label:'Español',gameId:210201},'0d7f875877fe856066cfb39b4ecdbbe7d48393a75770720876c94419f809bb1c':{label:'USA · Inglés',gameId:210202}}};
-const config=await loadBackendConfig(backend,{attempts:new URL(backend).hostname.endsWith('.onrender.com')?12:1,onWaiting:()=>{$('connection').textContent='Despertando servidor · puede tardar hasta 2 minutos';$('rooms').textContent='El alojamiento gratuito está iniciando. Espera un momento para entrar al hangar.';}}).catch(()=>offlineConfig);
-if(config.offline||window.MW_STATIC_HOST||config.publicUrl)document.querySelector('.notice').replaceChildren(document.createTextNode(config.offline?'PRÁCTICA DISPONIBLE ':'BETA EN PRUEBAS '),Object.assign(document.createElement('span'),{textContent:config.offline?'El servidor de salas está apagado. Puedes cargar tu ROM y practicar.':window.MW_STATIC_HOST?'Web alojada en GitHub. Las salas usan un servidor externo de prueba.':'Invitaciones por enlace temporal. El anfitrión debe mantener abierta la partida.'}));
+const config=await loadBackendConfig(backend,{attempts:new URL(backend).hostname.endsWith('.onrender.com')?12:1,onWaiting:()=>{connection('Despertando servidor · hasta 2 minutos','loading');$('rooms').textContent='El alojamiento gratuito está iniciando. Espera un momento para entrar al hangar.';}}).catch(()=>offlineConfig);
+if(config.offline||window.MW_STATIC_HOST||config.publicUrl)document.querySelector('.notice').replaceChildren(document.createTextNode(config.offline?'PRÁCTICA DISPONIBLE ':'TRANSMISIÓN / 01 '),Object.assign(document.createElement('span'),{textContent:config.offline?'Las salas no responden. Carga tu ROM para practicar; recarga para reintentar.':'Dos pilotos. La misma ROM. El anfitrión mantiene abierta la partida. El servidor gratuito puede tardar en despertar.'}));
 let session=null,lobby=null,rom=null,hash=null,emuReady=false,loading=null,pending=null,activeRoom=null,lastState={rooms:[],players:[]},busy=false;
 let messageTimer;
 function message(t){$('message').textContent=t;clearTimeout(messageTimer);messageTimer=setTimeout(()=>$('message').textContent='',7000);}
-function buttons(){for(const id of ['create','quick'])$(id).disabled=!rom||!lobby?.connected||busy||!!activeRoom;$('solo').disabled=!rom||busy||!!activeRoom;}
+function uiState(){return {offline:config.offline,connected:!!lobby?.connected,session:!!session,rom:!!rom,hash,busy,activeRoom};}
+function buttons(){for(const id of ['create','quick'])$(id).disabled=!rom||!lobby?.connected||busy||!!activeRoom;$('solo').disabled=!rom||busy||!!activeRoom;
+ const hint=$('lobby-hint');if(hint)hint.textContent=lobbyHint(uiState());
+ for(const [id,done,current]of [['step-pilot',!!session,!session],['step-rom',!!rom,!!session&&!rom],['step-battle',!!activeRoom,!!rom]]){const step=$(id);if(step){step.dataset.state=done?'complete':current?'current':'pending';if(current&&!done)step.setAttribute('aria-current','step');else step.removeAttribute('aria-current');}}
+}
 function text(tag,value,cls){const e=document.createElement(tag);e.textContent=value;if(cls)e.className=cls;return e;}
 function render(state=lastState){
  lastState=state;$('room-count').textContent=state.rooms.length;$('player-count').textContent=state.players.length;
  $('rooms').replaceChildren();$('rooms').className=state.rooms.length?'':'empty';
- if(!state.rooms.length)$('rooms').textContent='No hay salas abiertas. Crea una e invita a tu rival.';
- for(const r of state.rooms){const row=text('div','','room'),info=text('div','');info.append(text('strong',r.room_name),text('small',`${r.host} · ${r.language} · ${r.current}/2 pilotos`));const b=text('button',r.current===2?'En partida':r.rom!==hash?'Otra versión':'Unirme');b.disabled=r.current===2||r.rom!==hash||busy||!!activeRoom||!rom;b.onclick=()=>startAction({type:'join',room:r});row.append(info,b);$('rooms').append(row);}
- $('players').replaceChildren();for(const p of state.players){const e=text('div',p.name,'pilot');e.append(text('span',p.state));$('players').append(e);}buttons();
+ if(!state.rooms.length)$('rooms').textContent=emptyRooms(uiState());
+ for(const r of state.rooms){const row=text('div','','room'),info=text('div','','room-info'),badge=text('span',r.current>=2?'2 / 2':'1 / 2','room-badge');row.dataset.full=String(r.current>=2);info.append(text('strong',r.room_name),text('small',`${r.host} · ${r.language} · ${r.current>=2?'Duelo completo':'Esperando rival'}`));const action=roomAction(r,uiState()),b=text('button',action.label);b.disabled=action.disabled;b.title=`${action.label}: ${r.room_name}`;b.onclick=()=>startAction({type:'join',room:r});row.append(badge,info,b);$('rooms').append(row);}
+ $('players').replaceChildren();if(!state.players.length)$('players').append(text('p',config.offline?'Pilotos no disponibles sin conexión.':session?'Aún no hay pilotos conectados.':'Entra al hangar para ver quién está disponible.','muted'));for(const p of state.players){const e=text('div',p.name,'pilot');e.append(text('span',p.state));$('players').append(e);}buttons();
 }
 $('login').onsubmit=async e=>{e.preventDefault();$('enter').disabled=true;try{
- if(config.offline){session={name:$('nickname').value.trim()};$('login').hidden=true;$('identity').hidden=false;$('identity').textContent=session.name+' · práctica individual';$('rooms').textContent='Servidor de salas no disponible. Carga tu ROM y pulsa Practicar.';buttons();return;}
+ if(config.offline){session={name:$('nickname').value.trim()};$('login').hidden=true;$('identity').hidden=false;$('identity').textContent=session.name+' · práctica individual';render();return;}
  const res=await fetch(backend+'/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('nickname').value})});session=await res.json();if(!res.ok)throw Error(session.error);
  lobby=baseIO(backend,{auth:{token:session.token,role:'lobby'}});
  window.io=(url,opts={})=>baseIO(url,{...opts,auth:{token:session.token,role:'emulator'}});
- lobby.on('connect',()=>{$('connection').textContent='Conectado al hangar';$('login').hidden=true;$('identity').hidden=false;$('identity').textContent=session.name;$('local-rom').hidden=!config.localRom;buttons();});
- lobby.on('lobby:update',render);lobby.on('disconnect',()=>{$('connection').textContent='Sin conexión · reintentando';buttons();});lobby.on('connect_error',e=>message(e.message));
+ lobby.on('connect',()=>{connection('Piloto conectado','online');$('login').hidden=true;$('identity').hidden=false;$('identity').textContent=session.name;$('local-rom').hidden=!config.localRom;buttons();});
+ lobby.on('lobby:update',render);lobby.on('disconnect',()=>{connection('Reconectando al hangar','loading');render({rooms:[],players:[]});});lobby.on('connect_error',e=>message(e.message));
  }catch(e){message(e.message);$('enter').disabled=false;}};
 async function selectRom(file){
  if(!session)return message('Entra al hangar con tu apodo primero.');if(!config.offline&&!lobby?.connected)return message('Espera a que se restablezca la conexión.');if(loading||emuReady||activeRoom)return message('Recarga la página para cambiar la ROM.');
@@ -67,7 +73,7 @@ function wireNetplay(emu){
  setInterval(()=>{if(!activeRoom)return;const count=Object.keys(n.players).length;if(activeRoom.owner)$('game-status').textContent=count===2?'Rival conectado. Selecciona 2 jugadores en el menú del juego.':'Esperando un rival. Copia la invitación para compartir la sala.';else if(n.webRtcReady)$('game-status').textContent='Video conectado · tú controlas al jugador 2';},1000);
 }
 async function startAction(action){
- if(busy||activeRoom)return;busy=true;pending=action;render();$('game-panel').hidden=false;$('game-panel').scrollIntoView({behavior:'smooth',block:'start'});
+ if(busy||activeRoom)return;busy=true;pending=action;render();$('game-panel').hidden=false;$('game-panel').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
  $('game-title').textContent=action.type==='solo'?'Práctica local':action.type==='host'?action.name:action.room.room_name;
  try{const emu=await boot();if(pending!==action)return;emu.play();const n=emu.netplay;
   if(action.type==='solo'){busy=false;render();return;}
@@ -77,6 +83,6 @@ async function startAction(action){
  }catch(e){busy=false;message(e.message);render();}
 }
 $('leave').onclick=()=>{if(busy&&!emuReady){location.reload();return;}pending=null;const e=window.EJS_emulator;if(activeRoom)e.netplay.leaveRoom();e?.pause();$('game-panel').hidden=true;busy=false;render();};
-$('invite').onclick=async()=>{if(!activeRoom)return;const url=new URL(window.MW_STATIC_HOST?location.href:config.publicUrl||location.href);url.searchParams.set('sala',activeRoom.id);try{await navigator.clipboard.writeText(url.href);message(config.publicUrl?'Invitación copiada. Tu rival necesita cargar la misma ROM.':'Enlace local copiado. Solo funciona donde sea accesible este servidor.');}catch{message(url.href);}};
+$('invite').onclick=async()=>{if(!activeRoom)return;const url=new URL(window.MW_STATIC_HOST?location.href:config.publicUrl||location.href);url.searchParams.set('sala',activeRoom.id);try{await navigator.clipboard.writeText(url.href);message(window.MW_STATIC_HOST||config.publicUrl?'Invitación copiada. Tu rival necesita cargar la misma ROM.':'Enlace local copiado. Solo funciona donde sea accesible este servidor.');}catch{message(url.href);}};
 window.addEventListener('unhandledrejection',e=>console.error('Arena:',e.reason));
-$('connection').textContent=config.offline?'Solo práctica · salas sin conexión':'Hangar disponible';$('enter').disabled=false;
+connection(config.offline?'Solo práctica · sin conexión':'Servidor disponible',config.offline?'offline':'online');$('enter').disabled=false;render();

@@ -2,7 +2,9 @@
 
 ## GitHub y publicación
 
-### Servidor gratuito en Render (preparado; pendiente de activar)
+### Servidor gratuito en Render (activo)
+
+Servidor conectado a GitHub Pages: https://metal-warriors-salas.onrender.com. La variable `BACKEND_URL` ya apunta a Render; las salas públicas no dependen del túnel de la laptop. Verificados salud, CORS, conexión WebSocket de dos clientes, creación/ingreso a sala, señalización y cierre. Las notas del túnel más abajo describen la prueba local anterior.
 
 [Crear el servidor gratuito en Render](https://render.com/deploy?repo=https://github.com/denniscasther/metal-warriors-online)
 
@@ -15,6 +17,10 @@ La página reintenta al iniciar durante aproximadamente dos minutos si el backen
 Web: https://denniscasther.github.io/metal-warriors-online/
 
 Repositorio: https://github.com/denniscasther/metal-warriors-online
+
+### Interfaz: cabina retrofuturista
+
+Diseño con ilustración vectorial original, jerarquía visual de piloto/ROM/combate, tarjetas de sala y estados de conexión explícitos. La ROM permanece en el navegador. Los efectos respetan `prefers-reduced-motion`; se mantiene acceso por teclado y la distribución se adapta al ancho de pantalla. `tests/ui-state.test.mjs` cubre requisitos y mensajes; `tests/ui-contract.test.mjs` verifica que el rediseño preserve los elementos utilizados por el juego. La revisión visual en navegador de esta renovación queda pendiente por falta de navegador conectado en la sesión.
 
 GitHub Actions prepara el emulador fijado a su revisión, verifica las huellas del núcleo SNES y publica únicamente `dist/` en Pages al hacer push a `main`. No se publican ROMs, archivos privados ni registros. La variable de repositorio `BACKEND_URL` señala el servicio Node/Socket.IO de salas. Cuando cambie esa dirección, actualizar la variable y volver a ejecutar el workflow.
 
