@@ -1,41 +1,26 @@
-# Contexto para retomar Metal Warriors Arena
+# Contexto para retomar el proyecto
 
-Actualizado: 2026-10-11.
+Actualizado: 2026-10-11. Continuar desde `C:\Plataformas\Proyectos\denniscasther\metal-warriors-online`. La copia `C:\Users\denni\metal-warriors-online` se conserva como respaldo y **no se sincroniza automáticamente** con la principal.
 
-## Ubicación y publicación
+## Estado actual
 
-- Carpeta principal solicitada: `C:\Plataformas\Proyectos\denniscasther\metal-warriors-online`.
-- Copia anterior conservada como respaldo: `C:\Users\denni\metal-warriors-online`. Las carpetas no se sincronizan automáticamente entre sí; continuar desde la principal.
-- GitHub: https://github.com/denniscasther/metal-warriors-online (rama `main`).
-- Portal: https://denniscasther.github.io/metal-warriors-online/
-- Servidor de salas: https://metal-warriors-salas.onrender.com
-- Variable GitHub Actions `BACKEND_URL`: apunta al servidor de Render. No necesita la laptop encendida.
+- Repositorio `denniscasther/metal-warriors-online`, rama `main`; portal https://denniscasther.github.io/metal-warriors-online/.
+- Servidor de salas https://metal-warriors-salas.onrender.com, definido en `render.yaml` como servicio Free. `BACKEND_URL` del repositorio GitHub apunta allí. El servidor Render no se despliega automáticamente (`autoDeployTrigger: off`). GitHub Pages sí se publica al hacer push a `main`.
+- La aplicación funciona para Metal Warriors: salas de dos jugadores, lista de pilotos, práctica, invitaciones, verificación de ROM y WebRTC. El anfitrión emula y transmite; invitado controla jugador 2. El anfitrión debe mantener su pestaña abierta. Las salas y sesiones no son persistentes.
+- EmulatorJS fijado a `f4f0f1c7c4e24440820767203adf04cfe39aed0c`. El adaptador de `public/app.js` depende de APIs internas de esa revisión.
+- Descarga pública: `public/downloads/metal-warriors-es.smc`, publicada tras confirmación de autorización del usuario. Traducción parcial, 2097152 bytes, SHA-256 `7179556197d57fce35968f1fc1f303c825ec0a376bfda6ad3e8d8c36207ea2f3`. Derechos no verificados independientemente. `private/` solo es local.
+- La interfaz se renovó con robot vectorial, pasos piloto/ROM/combate, estados de salas y adaptación móvil.
 
-## Implementación
+## Próxima dirección acordada
 
-HTML/CSS/JavaScript, Express y Socket.IO; EmulatorJS fijado a `f4f0f1c7c4e24440820767203adf04cfe39aed0c`. El anfitrión emula y transmite audio/video mediante WebRTC; el invitado controla al jugador 2. No es rollback. Máximo dos pilotos por sala, misma huella de ROM requerida. Sesiones y salas solo en memoria. El anfitrión debe mantener su pestaña abierta.
+El usuario quiere dejar abierta la posibilidad de ofrecer salas para **otros juegos de Super Nintendo**. Esto es una dirección futura, no una capacidad actual. La propuesta técnica, límites y criterios de aceptación están en [docs/PLATAFORMA-SNES.md](docs/PLATAFORMA-SNES.md). No se ha elegido el siguiente juego ni se han autorizado/publicado otras ROM. No transformar la aplicación en un catálogo sin verificar el versus de cada título.
 
-GitHub Actions publica `dist/` al subir a `main`. Render usa `render.yaml`, plan Free, `HOST=0.0.0.0`, `BACKEND_ONLY=true`; la raíz redirige a Pages. Actualizaciones del servidor requieren despliegue manual en Render (`autoDeployTrigger: off`). El plan gratuito puede dormir; la interfaz espera su arranque y ofrece práctica si falla. No hay TURN; falta validar partidas prolongadas entre dos redes físicas distintas.
+La ampliación debe conservar Metal Warriors funcionando. Separar catálogo de juegos/versiones de la lógica de salas; identificar cada sala por juego y huella exacta de ROM; configurar EmulatorJS, controles e instrucciones por título. Probar primero un segundo juego en dos navegadores y luego dos redes físicas. Evaluar TURN si la conexión directa falla. Evitar afirmar que todos los juegos SNES comparten el mismo modo multijugador.
 
-## Últimos cambios
+## Comandos y comprobaciones
 
-- Portal renovado con cabina retrofuturista, robot SVG original, guía piloto/ROM/combate, salas con estados explícitos, adaptación móvil y movimiento reducido.
-- Revisión visual de esta renovación pendiente: no había navegador conectado a la herramienta durante la sesión. No afirmar que pasó inspección visual completa.
-- Descarga pública en `public/downloads/metal-warriors-es.smc`, publicada a petición del usuario tras confirmar autorización de distribución; no se verificaron los derechos independientemente.
-- Traducción parcial: el menú versus sigue llamándose HEAD TO HEAD.
-- SHA-256 español: `7179556197d57fce35968f1fc1f303c825ec0a376bfda6ad3e8d8c36207ea2f3`; tamaño 2097152 bytes.
-- Publicación de descarga verificada por HTTP y SHA-256. Doce pruebas automatizadas aprobadas (servidor, estados, contrato HTML y descarga).
+`npm ci`, `node tools/prepare-emulator.mjs`, `npm test`, `npm start` para el entorno local. `npm run test:browser` requiere Edge, la ROM local y una prueba específica del juego. Revisar `README.md` antes de iniciar el túnel antiguo con `INICIAR.ps1`.
 
-## Trabajar y verificar
+En el traslado a la carpeta principal, el commit local coincidía con GitHub y pasaban 12 pruebas; esta nota documental puede generar un nuevo commit. Verificar de nuevo `git status --short`, `git rev-parse HEAD` y el remoto al continuar.
 
-`npm ci`, `npm test`, `npm start` (http://127.0.0.1:4178). `node tools/prepare-emulator.mjs` prepara el emulador sin extraer archivos originales. `INICIAR.ps1` corresponde al arranque local y al antiguo túnel de prueba, no al servidor público actual. Revisar antes de usarlo para no confundir una instancia local anterior con esta carpeta.
-
-`npm run test:browser` contiene el ensayo anterior con dos clientes Edge y requiere navegador disponible y ROM local. Capturas/registros están en `artifacts/` y no se publican. No modificar `wireNetplay` sin repetir pruebas del emulador.
-
-Las carpetas `private/`, `vendor/`, `node_modules/`, `artifacts/`, `dist/` y los logs son locales e ignorados por Git. Única excepción ROM versionada: `public/downloads/metal-warriors-es.smc`. No subir otras carpetas privadas, credenciales o archivos personales.
-
-## Próximos pasos
-
-1. Revisar visualmente el diseño en escritorio y móvil.
-2. Completar duelos desde dos redes distintas y evaluar latencia y necesidad de TURN.
-3. Mantener la ficha del proyecto en el cerebro del directorio principal si se incorpora al inventario compartido.
+Pendientes: revisión visual del portal con navegador conectado, sesiones prolongadas desde redes diferentes, latencia, TURN y recuperación tras desconexiones. Las carpetas `private/`, `vendor/`, `node_modules/`, `artifacts/`, `dist/` y logs son locales; no publicar secretos ni otros archivos personales. La única ROM versionada por ahora es `public/downloads/metal-warriors-es.smc`.

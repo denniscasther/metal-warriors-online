@@ -1,80 +1,48 @@
 # Metal Warriors Arena
 
-## Descarga pública
+Juego de Super Nintendo en el navegador con práctica individual y salas versus de dos personas. La partida corre en el navegador del anfitrión; el video y el audio llegan al invitado por WebRTC, y sus controles vuelven como jugador 2. Es una versión funcional para **Metal Warriors**, todavía no un catálogo de varios juegos.
 
-Por petición del usuario y tras su confirmación de autorización para distribuir el archivo, el portal ofrece `public/downloads/metal-warriors-es.smc` (2 MiB, traducción parcial al español). Esta confirmación no es una verificación independiente de los derechos. El archivo se publica en GitHub y GitHub Pages; no se expone la carpeta `private/`. `tests/download.test.mjs` verifica su SHA-256 frente a la versión aceptada por las salas. Las referencias históricas a publicación «sin ROMs» corresponden a la versión anterior a esta descarga.
+- Portal: https://denniscasther.github.io/metal-warriors-online/
+- Salas: https://metal-warriors-salas.onrender.com
+- Código: https://github.com/denniscasther/metal-warriors-online
 
-## GitHub y publicación
+La documentación para continuar está en [CONTEXTO.md](CONTEXTO.md). La propuesta para incorporar otros juegos está en [docs/PLATAFORMA-SNES.md](docs/PLATAFORMA-SNES.md).
 
-### Servidor gratuito en Render (activo)
+## Jugar
 
-Servidor conectado a GitHub Pages: https://metal-warriors-salas.onrender.com. La variable `BACKEND_URL` ya apunta a Render; las salas públicas no dependen del túnel de la laptop. Verificados salud, CORS, conexión WebSocket de dos clientes, creación/ingreso a sala, señalización y cierre. Las notas del túnel más abajo describen la prueba local anterior.
+1. Abre el portal, escribe un apodo y pulsa **Entrar al hangar**.
+2. Descarga la ROM en español desde el portal si la necesitas. Luego pulsa **Elegir archivo .smc o .sfc** y selecciona el archivo descargado. El archivo cargado se procesa en el navegador.
+3. Pulsa **Practicar**, **Crear sala** o **Buscar rival**. Buscar rival entra en una sala compatible disponible o crea una nueva.
+4. Ambos jugadores deben cargar exactamente la misma versión. El anfitrión mantiene abierta su pestaña.
+5. Dentro del juego el versus se llama **HEAD TO HEAD**; la traducción al español es parcial. Selecciona dos jugadores en el menú del juego.
 
-[Crear el servidor gratuito en Render](https://render.com/deploy?repo=https://github.com/denniscasther/metal-warriors-online)
+Flechas para mover; Enter para Start; Shift para Select; Z/X/A/S para los botones; Q/W para L/R. El emulador permite reasignarlos. El enlace de invitación se copia desde una sala abierta.
 
-El archivo `render.yaml` define únicamente un servicio Node con `plan: free`, sin base de datos, discos ni complementos de pago. Iniciar sesión en Render, revisar que el plan sea **Free** y crear el servicio. Si solicita contratar un plan de pago, no continuar. El servidor escucha en `0.0.0.0` y el puerto asignado por Render; `/api/health` es su comprobación de salud. La raíz redirige al juego en GitHub Pages. No necesita emulador ni ROM en Render.
+La ROM publicada a petición del usuario es `public/downloads/metal-warriors-es.smc`, de 2 MiB, con SHA-256 `7179556197d57fce35968f1fc1f303c825ec0a376bfda6ad3e8d8c36207ea2f3`. El usuario confirmó autorización para distribuir ese archivo; el proyecto no verificó los derechos de forma independiente. La versión USA también es aceptada si el jugador ya la tiene, pero no se ofrece como descarga. La carpeta local `private/` no se publica.
 
-Cuando Render muestre el despliegue **Live**, copiar la URL HTTPS real y comprobar `/api/health`. Después establecer esa URL en la variable `BACKEND_URL` del repositorio GitHub y ejecutar el workflow de Pages. No sustituir el backend temporal hasta verificar el nuevo servicio. El botón de despliegue no activa actualizaciones automáticas; tras cambios futuros del servidor, desplegar manualmente en Render.
+## Arquitectura y publicación
 
-La página reintenta al iniciar durante aproximadamente dos minutos si el backend es `*.onrender.com`, para soportar el despertar del plan gratuito. Si falla, permite práctica individual; recargar para volver a intentar las salas. No realiza sondeos en segundo plano para evitar la suspensión. Las salas se pierden al reiniciar el servidor. El plan gratuito tiene cuotas y no garantiza disponibilidad continua. TURN sigue sin estar configurado: ciertas redes pueden impedir la conexión directa entre jugadores.
+`public/` contiene el portal y el adaptador de EmulatorJS. `server.mjs` ofrece sesiones, presencia, salas de dos plazas, validación de ROM, señalización WebRTC y retransmisión de controles. Las salas y sesiones viven en memoria: al reiniciar Render se pierden. No hay cuentas, ranking ni migración del anfitrión. Actualmente se usa STUN; falta TURN para redes que no consiguen conectar directamente.
 
-Web: https://denniscasther.github.io/metal-warriors-online/
+GitHub Actions (`.github/workflows/pages.yml`) prepara el emulador y publica `dist/` en GitHub Pages cuando hay cambios en `main`. La variable de repositorio `BACKEND_URL` apunta al servicio de Render. `render.yaml` define un servicio Node gratuito para las salas; tiene `autoDeployTrigger: off`, por lo que los cambios del servidor requieren despliegue manual en Render. La instancia gratuita puede suspenderse por inactividad; la página espera su arranque y permite practicar si sigue sin responder. La laptop no necesita estar encendida para la web pública.
 
-Repositorio: https://github.com/denniscasther/metal-warriors-online
+El emulador está fijado al commit `f4f0f1c7c4e24440820767203adf04cfe39aed0c`. `public/app.js` adapta interfaces internas de esa versión; repetir las pruebas del juego antes de actualizarla. El servidor publicado en Render funciona solo como backend (`BACKEND_ONLY=true`); no aloja el emulador ni la ROM.
 
-### Interfaz: cabina retrofuturista
+## Trabajo local
 
-Diseño con ilustración vectorial original, jerarquía visual de piloto/ROM/combate, tarjetas de sala y estados de conexión explícitos. La ROM permanece en el navegador. Los efectos respetan `prefers-reduced-motion`; se mantiene acceso por teclado y la distribución se adapta al ancho de pantalla. `tests/ui-state.test.mjs` cubre requisitos y mensajes; `tests/ui-contract.test.mjs` verifica que el rediseño preserve los elementos utilizados por el juego. La revisión visual en navegador de esta renovación queda pendiente por falta de navegador conectado en la sesión.
+La carpeta de trabajo principal es `C:\Plataformas\Proyectos\denniscasther\metal-warriors-online`.
 
-GitHub Actions prepara el emulador fijado a su revisión, verifica las huellas del núcleo SNES y publica únicamente `dist/` en Pages al hacer push a `main`. Incluye la descarga española expresamente solicitada; no publica la carpeta privada ni registros. La variable de repositorio `BACKEND_URL` señala el servicio Node/Socket.IO de salas. Cuando cambie esa dirección, actualizar la variable y volver a ejecutar el workflow.
+```powershell
+npm ci
+node tools/prepare-emulator.mjs
+npm test
+npm start
+```
 
-La web y la práctica individual funcionan sin el servidor de salas, siempre que el navegador pueda descargar los recursos y el usuario seleccione su ROM. Si el servidor no está disponible, la interfaz lo informa y desactiva crear/buscar salas. El multijugador aún depende del servidor externo: publicar en GitHub no convierte el túnel temporal en un alojamiento permanente.
+Abrir http://127.0.0.1:4178. Para jugar localmente, usa **Elegir archivo** y la ROM de `public/downloads/`. `npm run setup` y `INICIAR.ps1` son utilidades del prototipo inicial: pueden depender del RAR de Downloads o abrir el antiguo túnel local. No son necesarios para usar la web pública.
 
-Prototipo local con lobby real, presencia de jugadores, salas de dos plazas y versus mediante EmulatorJS. Prioriza la ROM aportada con traducción parcial al español. El menú original aún muestra ONE PLAYER y HEAD TO HEAD.
+`npm test` comprueba el servidor, los estados de interfaz, los elementos necesarios del portal y la huella de la descarga. `npm run test:browser` contiene un ensayo de dos clientes con Edge y requiere navegador y ROM local. Se verificó una partida versus en dos pestañas y a través de un túnel HTTPS temporal antes del traslado a Render; todavía faltan partidas prolongadas entre dos redes físicas diferentes. También está pendiente una revisión visual de la renovación del portal en escritorio y móvil.
 
-## Abrir y jugar
+## Próxima etapa
 
-1. Ejecutar `npm start` en esta carpeta y abrir http://127.0.0.1:4178.
-2. Escribir un apodo y pulsar **Entrar al hangar**.
-3. Pulsar **Usar mi ROM en español**. También se acepta un archivo .smc o .sfc local; los comprimidos deben extraerse primero.
-4. Elegir **Practicar**, **Crear sala** o **Buscar rival**. Buscar rival entra a la primera sala compatible o crea una si no hay ninguna.
-5. Para una prueba en este equipo, abrir otra pestaña con otro apodo, cargar la misma ROM y pulsar **Unirme**.
-6. Esperar las pantallas iniciales del juego. Pulsar Enter para ir al título, esperar que aparezca el menú, bajar a **HEAD TO HEAD** y confirmar con Enter. Elegir escenario y robots dentro del juego.
-
-Flechas para dirección, Enter para Start, Shift para Select, Z/X/A/S para los cuatro botones, Q/W para L/R. El menú del emulador permite reasignar botones y mandos. Mantener la pestaña del anfitrión abierta y activa. Al salir el anfitrión termina la sala; no hay migración de anfitrión.
-
-## Qué está implementado
-
-- Presencia y salas en tiempo real mediante Socket.IO; ninguna sala o persona ficticia.
-- Admisión atómica de hasta dos personas. Validación de ROM por SHA-256 y versión de juego.
-- Emulación SNES y envío de audio/video del anfitrión al invitado mediante WebRTC. Los controles remotos van al jugador 2.
-- Enlaces de invitación, práctica local y cierre de sala al desconectarse.
-- Carga de ROM en memoria del navegador. La copia preparada en `private/` solo se sirve en la interfaz de loopback local. No hay subida de ROM ni archivos originales modificados.
-
-## Arquitectura y versiones
-
-Esta implementación **transmite la partida del anfitrión**; no es rollback ni emulación determinista en paralelo. El invitado arranca el núcleo por compatibilidad con la interfaz de EmulatorJS y después lo congela para visualizar la transmisión. El audio y video consumen ancho de banda del anfitrión.
-
-EmulatorJS está fijado al commit `f4f0f1c7c4e24440820767203adf04cfe39aed0c` en `vendor/emulatorjs`. `public/app.js` contiene un adaptador a sus interfaces internas; al actualizar el proveedor hay que repetir las pruebas. Se conserva la licencia del proveedor en su repositorio. El núcleo SNES estable descargado declara compilación del 14 de junio de 2025. El proveedor emite una advertencia sobre `getControllerPortInfo`, función opcional ausente en ese núcleo; usa su alternativa de configuración.
-
-ROM española: `7179556197d57fce35968f1fc1f303c825ec0a376bfda6ad3e8d8c36207ea2f3`.
-
-ROM USA: `0d7f875877fe856066cfb39b4ecdbbe7d48393a75770720876c94419f809bb1c`.
-
-## Preparación y pruebas
-
-`npm ci` instala las dependencias fijadas en package-lock.json. `npm run setup` descarga los núcleos y extrae exclusivamente la ROM española del RAR aportado, sin ejecutar ni abrir los enlaces que contiene. La ruta de ese archivo está documentada en `tools/setup.mjs` y puede pasarse como argumento.
-
-`npm test` comprueba admisión, capacidad, incompatibilidad de ROM, señalización, desconexión y autenticación. `npm run test:browser` abre Edge sin ventanas, ejecuta dos clientes, comprueba recepción de video/audio, entrada del control 2 y salida del anfitrión. Las capturas y los registros quedan en `artifacts/`. Las pruebas no equivalen a validar latencia en dos redes físicas diferentes ni a una sesión prolongada de juego.
-
-Verificación del 11 de octubre de 2026: pruebas de servidor aprobadas; dos navegadores conectados localmente y mediante el enlace HTTPS temporal; audio y video recibidos, pulsaciones del invitado observadas en el control 2, modo HEAD TO HEAD con ambos robots y cierre al salir el anfitrión comprobados. El usuario confirmó que funciona en su entorno local. Falta el ensayo entre dos redes físicas diferentes. `INICIAR.ps1` abre la instancia si ya está activa; si no lo está, intenta iniciar servidor y túnel sin ventanas de consola visibles.
-
-## Para acceso desde internet
-
-El servidor escucha en `127.0.0.1:4178`, y se ha abierto un túnel HTTPS temporal en https://ladder-reduces-holds-salaries.trycloudflare.com. El acceso local ofrece el botón para usar la ROM preparada; el acceso público requiere elegir el archivo desde el equipo de cada jugador. La ROM, la carpeta privada y el código del servidor devuelven 404 por la URL pública. Las invitaciones generadas localmente usan el enlace público cuando `PUBLIC_URL` está configurada.
-
-El túnel depende de que este equipo, el servidor Node y cloudflared permanezcan encendidos. Su dirección puede cambiar cuando se reinicia. No es un alojamiento permanente. Para operación continua se necesita un alojamiento Node con HTTPS y soporte WebSocket, y configurar TURN mediante `ICE_SERVERS_JSON` para redes que no logren una conexión directa. La configuración actual usa STUN y no dispone de TURN. El servidor admite `PORT` y `HOST`; al cambiar HOST la ROM local deja de estar disponible.
-
-Una web estática por sí sola no aloja el servidor de salas. Este servidor Node/Socket.IO no se despliega directamente como un Worker de Sites. La prueba pública usa Cloudflare Quick Tunnel hacia el proceso local. No se ha contratado infraestructura ni configurado un servidor TURN. La memoria de salas se pierde al reiniciar, y no existen cuentas, ranking, moderación avanzada ni reconexión a mitad de combate.
-
-La siguiente prueba de aceptación es completar tres duelos desde dos redes distintas y medir retraso, continuidad de audio/video y recuperación tras una salida. No se afirma aún que ese ensayo haya pasado.
+Antes de incorporar otro juego, seguir [docs/PLATAFORMA-SNES.md](docs/PLATAFORMA-SNES.md): catálogo por juego y versión, salas aisladas, configuración del emulador por título y una prueba real del versus. Añadir un nombre o una ROM a `server.mjs` por sí solo no garantiza que el multijugador del nuevo juego funcione.
